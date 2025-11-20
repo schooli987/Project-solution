@@ -25,14 +25,9 @@ pin_image = pygame.transform.scale(pin_image, (60, 90))
 background_image = pygame.transform.scale(background_image, (800, 600))
 
 # Sounds
-launch_sound = pygame.mixer.Sound("pop.mp3")
-hit_sound = pygame.mixer.Sound("hit.mp3")
+hit_sound = pygame.mixer.Sound("bowling_ball.mp3")
 win_sound = pygame.mixer.Sound("win.mp3")
 lose_sound = pygame.mixer.Sound("lose.mp3")
-
-pygame.mixer.music.load("bg_music.mp3")
-pygame.mixer.music.set_volume(0.2)
-pygame.mixer.music.play(-1)
 
 # Ground
 ground_body = pymunk.Body(body_type=pymunk.Body.STATIC)
@@ -64,23 +59,26 @@ def create_pin(x, y):
 
 # Vertically arranged pins
 pins = []
-rows = [ 4, 3, 2, 1]  # Number of pins per row
+rows = [4, 3, 2, 1]
 start_x = 600
 start_y = 520
-dx = 30  # horizontal spacing between pins
-dy = 70  # vertical spacing between rows
+dx = 30
+dy = 70
 
-for row_index, num_pins in enumerate(rows):
+for row_index in range(len(rows)):
+    num_pins = rows[row_index]
     row_y = start_y - row_index * dy
     row_start_x = start_x - ((num_pins - 1) * dx) / 2
     for i in range(num_pins):
         x = row_start_x + i * dx
         y = row_y
         pins.append(create_pin(x, y))
+
 # Draw
 def draw_game():
     screen.blit(background_image, (0, 0))
 
+    # WIN CONDITION
     if len(pins) == 0 and not game_over:
         win_sound.play()
         font = pygame.font.SysFont(None, 72)
@@ -88,6 +86,7 @@ def draw_game():
         screen.blit(win_text, (300, 250))
         return
 
+    # LOSE CONDITION
     if game_over:
         lose_sound.play()
         font = pygame.font.SysFont(None, 72)
@@ -99,7 +98,7 @@ def draw_game():
     ball_pos = ball_body.position
     screen.blit(ball_image, (ball_pos.x - 25, ball_pos.y - 25))
 
-    # Draw Pins
+    # Draw Pins & scoring
     global score
     for body, shape in pins[:]:
         pos = body.position
@@ -111,9 +110,6 @@ def draw_game():
         else:
             screen.blit(pin_image, (pos.x - 15, pos.y - 30))
 
-    # Ground
-  #  pygame.draw.line(screen, (0, 0, 0), (0, 580), (800, 580), 5)
-
     # UI
     font = pygame.font.SysFont(None, 36)
     screen.blit(font.render(f"Score: {score}", True, (255, 255, 255)), (10, 10))
@@ -124,12 +120,17 @@ while running:
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+
         elif event.type == pygame.MOUSEBUTTONDOWN and attempts > 0 and not game_over:
             mouse_pos = pygame.mouse.get_pos()
             ball_body.position = (150, 500)
-            ball_body.velocity = ((mouse_pos[0] - 150) * 4, (mouse_pos[1] - 500) * 4)
-            launch_sound.play()
+            ball_body.velocity = (
+                (mouse_pos[0] - 150) * 4,
+                (mouse_pos[1] - 500) * 4
+            )
+            hit_sound.play()
             attempts -= 1
+
             if attempts == 0 and len(pins) > 0:
                 game_over = True
                 pygame.mixer.music.stop()
